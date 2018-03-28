@@ -14,7 +14,7 @@
 *.dbg
 *.dlt
 *.dct
-*.cfg
+#*.cfg keep it because it contains configuration bits for the mc
 *.log
 *.lst
 *.ini
