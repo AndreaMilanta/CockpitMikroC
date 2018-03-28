@@ -37,7 +37,7 @@ void Can_init() {
                      _CAN_CONFIG_LINE_FILTER_ON &      // wake up by line
                      _CAN_CONFIG_SAMPLE_THRICE &       // for robustness
                      _CAN_CONFIG_PHSEG2_PRG_ON;        // these last two are linked to sync
-    CAN1Initialize(2, 4, 3, 4, 2, Can_Init_flags);          // SJW,BRP,PHSEG1,PHSEG2,PROPSEG
+    CAN1Initialize(2, BRP, 3, 4, 2, Can_Init_flags);          // SJW,BRP,PHSEG1,PHSEG2,PROPSEG
     CAN1SetOperationMode(_CAN_MODE_CONFIG, 0xFF);
 
     // Set masks and filters
