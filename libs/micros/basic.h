@@ -8,13 +8,19 @@
 #ifndef BASIC_H
 #define BASIC_H
  
+ //type definition
+ typedef unsigned char uint8_t;
+ typedef signed char int8_t ;
+ typedef unsigned int uint16_t;
+ typedef signed int int16_t;
+ typedef unsigned long uint32_t;
+ typedef signed long int32_t;
+
  // 1 and 0 equivalences
  #define TRUE 1
  #define FALSE 0
  #define HIGH 1
  #define LOW 0
- #define T TRUE
- #define F FALSE
  #define INPUT 1
  #define OUTPUT 0
  
