@@ -2,7 +2,7 @@
  * Author: Andrea Milanta
  * Created: 27/03/2018
  *
- * Code for single radio panel
+ * Code for single radio pl
  */
 
 // microcontroller
@@ -11,8 +11,10 @@
 // modules
 #include "timers.h"
 #include "can.h"
+#include "pwm.h"
 #include "sevenSegment.h"
 #include "quadratureEncoder.h"
+#include "pushButton.h"
 
 // cockpit constants
 #include "ckp_constants.h"
@@ -22,6 +24,9 @@
 //include "comm2.h"
 //include "nav1.h"
 //include "nav2.h"
+
+// backlight settings
+#define BACKLIGHT_PWM_DEVICE PWM1_DEVICE
 
 // Radio Properties
 #define BCD_IN_CONV_MULTIPLIER 100
@@ -33,12 +38,20 @@ s7d_disp disp_act, disp_stb;
 #define PUSHED_TIME 10 // duration in seconds for when pushed 
 qe_struct qe_act, qe_stb;
 
-// pins
-pin dataPin, clockPin, act_ltc, stb_ltc, qe1_pinA, qe1_pinB, qe1_pinSW, qe2_pinA, qe2_pinB, qe2_pinSW;
+// test button
+#define TEST_INPUT_MODE PULLUP
+#define PUSH_TIME 0
+pb_struct pb_test;
 
-// counter
+// pins
+pin dataPin, clockPin, act_ltc, stb_ltc;
+pin qe1_pinA, qe1_pinB, qe1_pinSW, qe2_pinA, qe2_pinB, qe2_pinSW;
+pin test_pin;
+
+// counters
 uint8_t s7d_counter;
 uint8_t qe_counter;
+uint8_t pb_counter;
 
 // CAN
 uint8_t can_tbs;    // signals whether there is a new data in can_in that needs to be sent (tbs)
@@ -62,7 +75,7 @@ void init(void)
 
     // define pins with role (input/output)
     // seven segment display
-    dataPin.port = &PORTE;    dataPin.pos = 0;      TRISE &= ~(1 << dataPin.pos);   //RE0
+    dataPin.port = &PORTE;    dataPin.pos = 4;      TRISE &= ~(1 << dataPin.pos);   //RE4
     clockPin.port = &PORTE;   clockPin.pos = 1;     TRISE &= ~(1 << clockPin.pos);  //RE1
     act_ltc.port = &PORTE;    act_ltc.pos = 2;      TRISE &= ~(1 << act_ltc.pos);   //RE2
     stb_ltc.port = &PORTE;    stb_ltc.pos = 3;      TRISE &= ~(1 << stb_ltc.pos);   //RE3
@@ -73,16 +86,23 @@ void init(void)
     qe2_pinA.port = &PORTB;   qe2_pinA.pos = 3;     TRISB |= (1 << qe2_pinA.pos);   //RB3
     qe2_pinB.port = &PORTB;   qe2_pinB.pos = 4;     TRISB |= (1 << qe2_pinB.pos);   //RB4
     qe2_pinSW.port = &PORTB;  qe2_pinSW.pos = 5;    TRISB |= (1 << qe2_pinSW.pos);  //RB5
+    // Test button
+    test_pin.port = &PORTD;   test_pin.pos = 1;     TRISD |= (1 << test_pin.pos);   //RD1
+
 
     // load display structs
-    s7d_loadStruct(&disp_act, dataPin, clockPin, act_ltc, COMM, DIGIT_NUM);
-    s7d_loadStruct(&disp_stb, dataPin, clockPin, stb_ltc, COMM, DIGIT_NUM);
+    s7d_loadStruct(&disp_act, dataPin, clockPin, act_ltc, COMM, DIGIT_NUM, (1 << DEC_LEN));
+    s7d_loadStruct(&disp_stb, dataPin, clockPin, stb_ltc, COMM, DIGIT_NUM, (1 << DEC_LEN));
     s7d_counter = S7D_UPDATE_RATE;
 
     // load encoders struct
     qe_loadStruct(&qe_act, qe1_pinA, qe1_pinB, qe1_pinSW, PUSHED_TIME);
     qe_loadStruct(&qe_stb, qe2_pinA, qe2_pinB, qe2_pinSW, PUSHED_TIME);
     qe_counter = QE_UPDATE_RATE;
+
+    // push button struct
+    pb_loadStruct(&pb_test, test_pin, PUSH_TIME, TEST_INPUT_MODE);
+    pb_counter = PB_UPDATE_RATE;
 
     // setup CAN
     can_mef.b1_mask = CAN_B1_MASK;
@@ -91,6 +111,10 @@ void init(void)
     can_mef.b2_mask = CAN_B2_MASK;
     can_mef.b2_filter_1 = CAN_B2_FILTER_1;
     can_init(CAN1_DEVICE, &can_mef);
+
+    // setup PWM
+    pwm_setup(BACKLIGHT_PWM_DEVICE, BACKLIGHT_FREQ, TIMER3_DEVICE);
+    pwm_begin(BACKLIGHT_PWM_DEVICE);
 
     // setup timer
     setTimer(TIMER1_DEVICE, 0.001);
@@ -111,6 +135,7 @@ onTimer1Interrupt
     resetCanArray();
     s7d_counter--;
     qe_counter--;
+    pb_counter--;
 
     // seven segment display handling
     if (s7d_counter) {
@@ -141,6 +166,21 @@ onTimer1Interrupt
             can_out[STB_INT_DELTA] = (res == PLUS_TICK) ? TRIGGER_PLUS : TRIGGER_MINUS;
 
         qe_counter = QE_UPDATE_RATE;
+    }
+
+    // test button handling
+    if (pb_counter) {
+        switch (pb_update(&pb_test)) {
+            case PB_TRIGGER_PUSH:
+                disp_act.testing = TRUE;
+                disp_stb.testing = TRUE;
+                break;
+            case PB_TRIGGER_UNPUSH:
+                disp_act.testing = FALSE;
+                disp_stb.testing = FALSE;
+                break;
+        }
+        pb_counter = PB_UPDATE_RATE;
     }
 
     // send updates on CAN
@@ -199,7 +239,7 @@ onCan1Interrupt
                     bckl = BACKLIGHT_MIN_DC;
                 if (bckl > BACKLIGHT_MAX_DC)
                     bckl = BACKLIGHT_MAX_DC;
-                COntinue
+                pwm_setDuty(BACKLIGHT_PWM_DEVICE, bckl);
             }
             break;
         // Unexpected packet

@@ -33,6 +33,15 @@ void setTimer(uint8_t device, double timePeriod)
                 break;
         #endif  //TIMER2_DEVICE
 
+        #ifdef TIMER3_DEVICE    
+            case TIMER3_DEVICE:
+                TIMER3_PERIOD = _getTimerPeriod(timePeriod, prescalerIndex);
+                TIMER3_ENABLE_INTERRUPT = TRUE;
+                TIMER3_ENABLE = TRUE;
+                TIMER3_PRESCALER = prescalerIndex;
+                break;
+        #endif  //TIMER3_DEVICE
+
         #ifdef TIMER4_DEVICE    
             case TIMER4_DEVICE:
                 TIMER4_PERIOD = _getTimerPeriod(timePeriod, prescalerIndex);
@@ -41,6 +50,15 @@ void setTimer(uint8_t device, double timePeriod)
                 TIMER4_PRESCALER = prescalerIndex;
                 break;
         #endif  //TIMER4_DEVICE
+                
+        #ifdef TIMER5_DEVICE    
+            case TIMER5_DEVICE:
+                TIMER5_PERIOD = _getTimerPeriod(timePeriod, prescalerIndex);
+                TIMER5_ENABLE_INTERRUPT = TRUE;
+                TIMER5_ENABLE = TRUE;
+                TIMER5_PRESCALER = prescalerIndex;
+                break;
+        #endif  //TIMER5_DEVICE
     }
 }
 
@@ -61,11 +79,23 @@ void setTimerInterruptPriority(uint8_t device, uint8_t priority)
                 break;
         #endif  //TIMER2_DEVICE
 
+        #ifdef TIMER3_DEVICE    
+            case TIMER3_DEVICE:
+                TIMER3_PRIORITY = priority;
+                break;
+        #endif  //TIMER3_DEVICE
+
         #ifdef TIMER4_DEVICE    
             case TIMER4_DEVICE:
                 TIMER4_PRIORITY = priority;
                 break;
         #endif  //TIMER4_DEVICE
+
+        #ifdef TIMER5_DEVICE    
+            case TIMER5_DEVICE:
+                TIMER5_PRIORITY = priority;
+                break;
+        #endif  //TIMER5_DEVICE
     }
 }
 
@@ -85,11 +115,23 @@ void clearTimer(uint8_t device)
                 break;
         #endif  //TIMER2_DEVICE
 
+        #ifdef TIMER3_DEVICE    
+            case TIMER3_DEVICE:
+                TIMER3_OCCURRED = FALSE;
+                break;
+        #endif  //TIMER3_DEVICE
+
         #ifdef TIMER4_DEVICE    
             case TIMER4_DEVICE:
                 TIMER4_OCCURRED = FALSE;
                 break;
         #endif  //TIMER4_DEVICE
+
+        #ifdef TIMER5_DEVICE    
+            case TIMER5_DEVICE:
+                TIMER5_OCCURRED = FALSE;
+                break;
+        #endif  //TIMER5_DEVICE
     }
 }
 
@@ -110,11 +152,23 @@ void startTimer(uint8_t device)
                 break;
         #endif  //TIMER2_DEVICE
 
+        #ifdef TIMER3_DEVICE 
+            case TIMER3_DEVICE:
+                TIMER3_ENABLE = TRUE;
+                break;
+        #endif  //TIMER3_DEVICE
+
         #ifdef TIMER4_DEVICE    
             case TIMER4_DEVICE:
                 TIMER4_ENABLE = TRUE;
                 break;
         #endif  //TIMER4_DEVICE
+
+        #ifdef TIMER5_DEVICE 
+            case TIMER5_DEVICE:
+                TIMER5_ENABLE = TRUE;
+                break;
+        #endif  //TIMER5_DEVICE
     }
 }
 
@@ -135,11 +189,23 @@ void stopTimer(uint8_t device)
                 break;
         #endif  //TIMER2_DEVICE
 
+        #ifdef TIMER3_DEVICE 
+            case TIMER3_DEVICE:
+                TIMER3_ENABLE = FALSE;
+                break;
+        #endif  //TIMER3_DEVICE
+
         #ifdef TIMER4_DEVICE    
             case TIMER4_DEVICE:
                 TIMER4_ENABLE = FALSE;
                 break;
         #endif  //TIMER4_DEVICE
+
+        #ifdef TIMER5_DEVICE 
+            case TIMER5_DEVICE:
+                TIMER5_ENABLE = FALSE;
+                break;
+        #endif  //TIMER5_DEVICE
     }
 }
 

@@ -8,7 +8,7 @@
 #include "sevenSegment.h"
 
 // loads the struct
-void s7d_loadStruct(s7d_disp *disp, pin dPin, pin cPin, pin lPin, uint8_t c, uint8_t dNum)
+void s7d_loadStruct(s7d_disp *disp, pin dPin, pin cPin, pin lPin, uint8_t c, uint8_t dNum, uint8_t tCommFlg)
 {
     disp->dataPin = dPin;
     disp->clockPin = cPin;
@@ -16,10 +16,12 @@ void s7d_loadStruct(s7d_disp *disp, pin dPin, pin cPin, pin lPin, uint8_t c, uin
     disp->digitNum = dNum;
     disp->comm = c;
     disp->currDigit = 0;
+    disp->testing = FALSE;
+    disp->testCommaFlags = tCommFlg;
 }
 
 // convert from digit to led segments array
-uint8_t digitToByte(int value, uint8_t common, COMMA comma)
+uint8_t digitToByte(int value, uint8_t common, uint8_t comma)
 {
     uint8_t digit;
     switch (value) {
@@ -78,7 +80,7 @@ uint8_t digitToByte(int value, uint8_t common, COMMA comma)
             digit = OFF;
     }
     if (comma == WITH_COMMA)
-        digit |= 0x01;      // add comma bit
+        digit |= COMMA;      // add comma bit
     if (common == COMMON_ANODE)
         digit = ~digit;
     return digit;
@@ -92,7 +94,10 @@ void s7d_update(s7d_disp* disp)
     uint8_t digits = 1 << (7 - disp->currDigit);
     if (disp->comm == COMMON_CATHODE)
         digits = ~digits;
-    values[0] = disp->datas[disp->currDigit];
+    if (disp->testing)
+        values[0] = ((1 << disp->currDigit) & disp->testCommaFlags) ? EIGHT & COMMA : EIGHT;
+    else
+        values[0] = disp->datas[disp->currDigit];
     values[1] = digits;
     sr_shift28Out(disp->dataPin, disp->clockPin, disp->latchPin, values, LSB_FIRST);
     disp->currDigit++;

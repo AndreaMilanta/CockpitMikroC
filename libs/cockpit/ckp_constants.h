@@ -13,6 +13,7 @@
 /**
  * ILLUMINATION
  */ 
+#define BACKLIGHT_FREQ 1000     // frequency of backlight PWM
 #define BACKLIGHT_MIN_DC 20     // minimum duty cycle (%) for backlight
 #define BACKLIGHT_MAX_DC 100    // maximum duty cycle (%) for Backlight
 

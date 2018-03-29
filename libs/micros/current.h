@@ -15,7 +15,7 @@
  #define INSTRUCTION_PERIOD 4.0 / OSC_FREQ_MHZ
  
  // Actually declared in specific ucontroller.c file
- extern const unsigned int PRESCALER_VALUES[];
+ extern const uint16_t PRESCALER_VALUES[];
  
  // microcontroller - REQUIRED
  #include "dsPIC30F4012.h"

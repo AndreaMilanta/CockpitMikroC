@@ -13,6 +13,9 @@
 #define S7D_UPDATE_RATE 15
 #define MAX_DIGIT 5
 
+// Testing values
+#define S7D_TEST 88888.88
+
 // Digits
 #define ZERO  0xFC
 #define ONE 0x60
@@ -32,6 +35,7 @@
 #define F 0x8E
 #define MINUS 0x02       // '-' char 
 #define OFF 0x00
+#define COMMA 0x01
 
 #define COMMON_CATHODE 0
 #define COMMON_ANODE 1
@@ -39,10 +43,8 @@
 #define FILL 0
 #define NOFILL 1
 
-typedef enum {
-    WITH_COMMA,
-    WITHOUT_COMMA
-} COMMA;
+#define WITH_COMMA 1
+#define WITHOUT_COMMA 0
 
 typedef struct {
     pin dataPin, clockPin, latchPin;
@@ -50,12 +52,14 @@ typedef struct {
     uint8_t digitNum;
     uint8_t currDigit;
     uint8_t datas[MAX_DIGIT];
+    uint8_t testing;
+    uint8_t testCommaFlags;     // flags for lighting up comma upon testing
 } s7d_disp;
 
 
-void s7d_loadStruct(s7d_disp *disp, pin dPin, pin cPin, pin lPin, uint8_t c, uint8_t dNum);
+void s7d_loadStruct(s7d_disp *disp, pin dPin, pin cPin, pin lPin, uint8_t c, uint8_t dNum, uint8_t tCommFlg);
 
-uint8_t ssd_digitToByte(uint8_t value, uint8_t common, COMMA comma);
+uint8_t ssd_digitToByte(uint8_t value, uint8_t common, uint8_t comma);
 
 void s7d_update(s7d_disp* disp);
 

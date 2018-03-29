@@ -26,6 +26,8 @@
  #define LOW 0
  #define INPUT 1
  #define OUTPUT 0
+ #define PULLUP 1
+ #define PULLDOWN 0
  
  // Edge
  #define RISING_EDGE 0

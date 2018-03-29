@@ -25,6 +25,13 @@
      #define onTimer2Interrupt void timer2_interrupt() iv IVT_ADDR_T2INTERRUPT ics ICS_AUTO
  #endif //TIMER2_DEVICE
 
+ #ifdef TIMER3_DEVICE
+     // Faster timer operations
+     #define clearTimer3() TIMER3_OCCURRED = FALSE
+     // Interrupt handler
+     #define onTimer3Interrupt void timer3_interrupt() iv IVT_ADDR_T3INTERRUPT ics ICS_AUTO
+ #endif //TIMER3_DEVICE
+
  #ifdef TIMER4_DEVICE
      // Faster timer operations
      #define clearTimer4() TIMER4_OCCURRED = FALSE
@@ -33,6 +40,13 @@
      // Interrupt handler
      #define onTimer4Interrupt void timer4_interrupt() iv IVT_ADDR_T4INTERRUPT ics ICS_AUTO
  #endif //TIMER4_DEVICE
+
+ #ifdef TIMER5_DEVICE
+     // Faster timer operations
+     #define clearTimer5() TIMER5_OCCURRED = FALSE
+     // Interrupt handler
+     #define onTimer5Interrupt void timer5_interrupt() iv IVT_ADDR_T5INTERRUPT ics ICS_AUTO
+ #endif //TIMER5_DEVICE
  
 
 //public function
