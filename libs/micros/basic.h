@@ -42,4 +42,14 @@
  #define VERY_LOW_PRIORITY 6
  #define LOWEST_PRIORITY 7
  
+ typedef struct 
+ {
+    uint8_t* port;
+    uint8_t pos; 
+ } pin;
+
+ void setLow(pin p);
+ void setHigh(pin p);
+ uint8_t readPin(pin p);
+
 #endif //BASIC_H

@@ -8,7 +8,7 @@
 #include "sevenSegment.h"
 
 // loads the struct
-void s7d_loadStruct(s7d_disp *disp, uint8_t dPin, uint8_t cPin, uint8_t lPin, uint8_t c, uint8_t dNum)
+void s7d_loadStruct(s7d_disp *disp, pin dPin, pin cPin, pin lPin, uint8_t c, uint8_t dNum)
 {
     disp->dataPin = dPin;
     disp->clockPin = cPin;

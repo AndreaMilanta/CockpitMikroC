@@ -16,6 +16,7 @@
 #define COMM2_ID 0b00000000000
 #define NAV1_ID 0b00000000000
 #define NAV2_ID 0b00000000000
+
 // Position of data in package
 #define ACT_DISP 0            // position in package (int)      // to panel
 #define STB_DISP 1            // position in package (int)      // to panel

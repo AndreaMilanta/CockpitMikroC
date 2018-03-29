@@ -10,7 +10,7 @@
 
 #include "shiftRegister.h"
 
-#define SEVEN_SEG_UPDATE_RATE 15
+#define S7D_UPDATE_RATE 15
 #define MAX_DIGIT 5
 
 // Digits
@@ -45,9 +45,7 @@ typedef enum {
 } COMMA;
 
 typedef struct {
-    uint8_t dataPin;
-    uint8_t clockPin;
-    uint8_t latchPin;
+    pin dataPin, clockPin, latchPin;
     uint8_t comm;
     uint8_t digitNum;
     uint8_t currDigit;
@@ -55,14 +53,14 @@ typedef struct {
 } s7d_disp;
 
 
-void s7d_loadStruct(s7d_disp *disp, uint8_t dPin, uint8_t cPin, uint8_t lPin, uint8_t c, uint8_t dNum);
+void s7d_loadStruct(s7d_disp *disp, pin dPin, pin cPin, pin lPin, uint8_t c, uint8_t dNum);
 
 uint8_t ssd_digitToByte(uint8_t value, uint8_t common, COMMA comma);
 
-void s7d_update(s7d_disp disp);
+void s7d_update(s7d_disp* disp);
 
-void s7d_writeInt(s7d_disp disp, int32_t value, uint8_t fill);
+void s7d_writeInt(s7d_disp* disp, int32_t value, uint8_t fill);
 
-void s7d_writeDouble(s7d_disp disp, double value, uint8_t decLen, uint8_t fill);
+void s7d_writeDouble(s7d_disp* disp, double value, uint8_t decLen, uint8_t fill);
 
 #endif //SEVENSEGMENT_H

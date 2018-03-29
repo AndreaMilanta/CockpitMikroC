@@ -3,27 +3,32 @@
  * Created: 28/03/2018
  *
  * Handles Quadrature Encoder inputs
+ *
+ * Switch is to be connected with PULLUP
  */
 
 #ifndef QUADRATUREENCODER_H
 #define QUADRATUREENCODER_H
 
-#define ENCODER_DT 2  // delta t between consecutive pinvalue checks
+#include "basic.h"
+
+#define QE_UPDATE_RATE 2    // delta t between consecutive pinvalue checks
 
 typedef enum {
-    NONE,
-    PLUS,
-    MINUS
+    NONE, 
+    PLUS_TICK,
+    MINUS_TICK
 } qe_RESULT;
 
 typedef struct {
-    uint8_t pinA, pinB, pinSW;
+    pin pinA, pinB, pinSW;
+    uint8_t oldA;
     uint16_t pushTicks, pushCounter;
-    uint8_t pushed;
+    uint8_t pushed, changedA, changedSW;
 } qe_struct;
 
-void qe_loadStruct(qe_struct* str, uint8_t pinA, uint8_t pinB, uint8_t pinSW, uint16_t pushedTime_s);
+void qe_loadStruct(qe_struct* qe, pin _pinA, pin _pinB, pin _pinSW, uint16_t pushedTime_s);
 
-qe_RESULT update(void);
+qe_RESULT qe_update(qe_struct* qe);
 
 #endif //QUADRATUREENCODER_H

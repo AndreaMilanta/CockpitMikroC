@@ -7,84 +7,52 @@
 
 #include "quadratureEncoder.h"
 
-// pushedTime is time in second for which pushed lasts, round iff when overflows goes back to min and viceversa
-Encoder::Encoder(ChanId chan, uint8_t pinA, uint8_t pinB, uint8_t pinSW, double maxVal, double minVal, double step, double stepPush, uint16_t pushedTime, boolean round)
+void qe_loadStruct(qe_struct* qe, pin _pinA, pin _pinB, pin _pinSW, uint16_t pushedTime_s)
 {
-    _round = round;
-    _chan.setId(chan);
-    _pinA = pinA;
-    _pinB = pinB;
-    _pinSW = pinSW;
-    _maxVal = maxVal > minVal ? maxVal : minVal;
-    _minVal = maxVal > minVal ? minVal : maxVal;
-    _step = step;
-    _stepPush = stepPush;
-    _value = (_maxVal + _minVal) / 2;
-    _pushedTicks = pushedTime * 1000 / ENCODER_DT;
-    //set as input and turn on internal pull-up
-    pinMode(_pinA, INPUT_PULLUP);
-    pinMode(_pinB, INPUT_PULLUP);
-    pinMode(_pinSW, INPUT_PULLUP);
-    _valA = digitalRead(_pinA);
-    _pushed = false;
-}
-
-void Encoder::setValue(double value)
-{
-    _value = value;
-    if (_value < _minVal)
-        _value = round ? _maxVal : _minVal;
-    if (_value > _maxVal)
-        _value = round ? _minVal : _maxVal;
-}
-
-void Encoder::setDeltaValue(double delta)
-{
-    this->setValue(_value + delta);
-}
-
-double Encoder::getValue(void)
-{
-    return _value;
+    qe->pinA = _pinA;
+    qe->oldA = readPin(qe->pinA);
+    qe->pinB = _pinB;
+    qe->pinSW = _pinSW;
+    qe->pushTicks = pushedTime_s * 1000 / QE_UPDATE_RATE;
+    qe->pushed = FALSE;
+    qe->pushCounter = 0;
+    qe->changedA = FALSE;
+    qe->changedSW = FALSE;
 }
 
 // Check if the encoder has moved. If so return true
-boolean Encoder::update(void)
+qe_RESULT qe_update(qe_struct* qe)
 {
-    boolean hasChanged = false;
-    double currStep;
-    boolean b = digitalRead(_pinB);
-    boolean a = digitalRead(_pinA);
-    boolean sw = digitalRead(_pinSW);
+    qe_RESULT result = NONE;
+    uint8_t a = readPin(*qe->pinA);
+    uint8_t b = readPin(*qe->pinB);
+    uint8_t sw = readPin(*qe->pinSW);
 
     // Handle Switch
-    if (!sw) {
-        _pushedCounter = _pushedTicks;
-        _pushed = true;
+    if (!sw && qe->changedSW) {
+        qe->pushCounter = qe->pushTicks;
+        qe->pushed = TRUE;
     }
     else {
-        if (_pushedCounter > 0 && _pushed)
-            _pushedCounter--;
+        if (qe->pushCounter > 0 && qe->pushed)
+            qe->pushCounter--;
         else
-            _pushed = false;
+            qe->pushed = FALSE;
     }
+    qe->changedSW = sw ? FALSE : TRUE;
 
-    //Handle Encoder
-    currStep = _pushed ? _stepPush : _step;
-    if (_changedA)
+    // Handle Encoder
+    if (qe->changedA)
     {
-        if (a == _valA && a)
-        {
-            b ? setDeltaValue(currStep) : setDeltaValue(-currStep);
-            hasChanged = true;
-        }
-        _changedA = false;
+        if (a == qe->oldA && a)
+            result = b ? PLUS_TICK : MINUS_TICK;
+        qe->changedA = FALSE;
     }
     else
     {
-        if (a != _valA)
-            _changedA = true;
+        if (a != qe->oldA)
+            qe->changedA = TRUE;
     }
-    _valA = a;
-    return hasChanged;
+    qe->oldA = a;
+    return result;
 }

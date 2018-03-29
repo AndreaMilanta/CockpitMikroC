@@ -44,18 +44,6 @@
  #define AN14  14
  #define AN15  16
 
- /*
- // Priorities
- #define REAL_TIME_PRIORITY 0
- #define HIGHEST_PRIORITY 1
- #define VERY_HIGH_PRIORITY 2
- #define HIGH_PRIORITY 3
- #define MEDIUM_PRIORITY 4
- #define LOW_PRIORITY 5
- #define VERY_LOW_PRIORITY 6
- #define LOWEST_PRIORITY 7
- */
-
  // External pin interrupt    
  #define INT0_TRIGGER_EDGE   INTCON2.INT0EP
  #define INT1_TRIGGER_EDGE   INTCON2.INT1EP
