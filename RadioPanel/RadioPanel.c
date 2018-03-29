@@ -6,9 +6,11 @@
  */
 
 // microcontroller
-#include "dsPIC30F4012.h"
+#include "current.h"
 
 // modules
+#include "timers.h"
+#include "can.h"
 #include "sevenSegment.h"
 #include "quadratureEncoder.h"
 
@@ -21,9 +23,10 @@
 //include "nav1.h"
 //include "nav2.h"
 
+// Radio Properties
+#define BCD_IN_CONV_MULTIPLIER 100
+
 // Display properties
-#define DIGIT_NUM 5
-#define COMM COMMON_CATHODE
 s7d_disp disp_act, disp_stb;
 
 // Encoders properties
@@ -38,25 +41,26 @@ uint8_t s7d_counter;
 uint8_t qe_counter;
 
 // CAN
-uint8_t can_tbs;    // signals whether there is dìnew data in can_in that needs to be sent (tbs)
-uint8_t can_out[8];
-uint16_t can_in[4];
+uint8_t can_tbs;    // signals whether there is a new data in can_in that needs to be sent (tbs)
+uint8_t can_out[CAN_PACKET_SIZE];
 
 // resets support variables for CAN
-void can_resetSupport(void)
+void resetCanArray(void)
 {
     uint8_t i;
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < CAN_PACKET_SIZE; i++)
         can_out[i] = IGNORED_BYTE_VALUE;
     can_tbs = FALSE;
 }
 
 // setup function
-void init(void) {
-    // Set all pin as digital
-    ADPCFG = 0xFFFF;
+void init(void) 
+{
+    can_masking can_mef;
 
-    // define pins with role (input - output)
+    setAllPinAsDigital();
+
+    // define pins with role (input/output)
     // seven segment display
     dataPin.port = &PORTE;    dataPin.pos = 0;      TRISE &= ~(1 << dataPin.pos);   //RE0
     clockPin.port = &PORTE;   clockPin.pos = 1;     TRISE &= ~(1 << clockPin.pos);  //RE1
@@ -80,12 +84,17 @@ void init(void) {
     qe_loadStruct(&qe_stb, qe2_pinA, qe2_pinB, qe2_pinSW, PUSHED_TIME);
     qe_counter = QE_UPDATE_RATE;
 
+    // setup CAN
+    can_mef.b1_mask = CAN_B1_MASK;
+    can_mef.b1_filter_1 = CAN_B1_FILTER_1;
+    can_mef.b1_filter_2 = CAN_B1_FILTER_2;
+    can_mef.b2_mask = CAN_B2_MASK;
+    can_mef.b2_filter_1 = CAN_B2_FILTER_1;
+    can_init(CAN1_DEVICE, &can_mef);
+
     // setup timer
     setTimer(TIMER1_DEVICE, 0.001);
-    setInterruptPriority(TIMER1_DEVICE, MEDIUM_PRIORITY);
-
-    // setup CAN
-    can_resetSupport();
+    startTimer(TIMER1_DEVICE);
 }
 
 void main() 
@@ -96,9 +105,10 @@ void main()
 }
 
 // generic 1ms interrupt
-onTimer1Interrupt {
+onTimer1Interrupt 
+{
     clearTimer1();
-    can_resetSupport();
+    resetCanArray();
     s7d_counter--;
     qe_counter--;
 
@@ -110,7 +120,8 @@ onTimer1Interrupt {
     }
 
     // encoder handling
-    if (qe_counter) {
+    if (qe_counter) 
+    {
         // active encoder handling
         qe_RESULT res = qe_update(&qe_act);
         if (res != NONE)
@@ -131,4 +142,69 @@ onTimer1Interrupt {
 
         qe_counter = QE_UPDATE_RATE;
     }
+
+    // send updates on CAN
+    if (can_tbs)
+        can_write(CAN1_DEVICE, CAN_ID, can_out, CAN_PRIORITY_MEDIUM);
+}
+
+onCan1Interrupt 
+{
+    // CAN handling variables
+    uint32_t id;
+    uint16_t dataLen, flags;
+    uint8_t can_in[CAN_PACKET_SIZE];
+
+    // display variables
+    uint16_t act, stb;
+    uint32_t act_dec, stb_dec;
+    double act_dbl, stb_dbl;
+
+    // backlight variables
+    uint8_t bckl;
+
+    // CAN reading
+    can1_clearInterrupt();
+    can1_read(&id, can_in, &dataLen, &flags);
+
+    // Packages are always full. If not its erroneus
+    if (dataLen < CAN_PACKET_SIZE)
+        return;
+
+    switch (id) 
+    {
+        // new display info
+        case CAN_ID:
+            act = MSBYTE_FIRST ? (uint16_t) (can_in[ACT_DISP] << 8) & can_in[ACT_DISP + 1] \
+                               : (uint16_t) (can_in[ACT_DISP + 1] << 8) & can_in[ACT_DISP];
+            stb = MSBYTE_FIRST ? (uint16_t) (can_in[STB_DISP] << 8) & can_in[STB_DISP + 1] \
+                               : (uint16_t) (can_in[STB_DISP + 1] << 8) & can_in[STB_DISP];
+            if (act != IGNORED_INT_VALUE){
+                act_dec = Bcd2Dec(act);
+                act_dbl = (double) act_dec / BCD_IN_CONV_MULTIPLIER;
+                s7d_writeDouble(&disp_act, act_dbl, DEC_LEN, FILLING_POLICY);
+            }
+            if (stb != IGNORED_INT_VALUE){
+                stb_dec = Bcd2Dec(stb);
+                stb_dbl = (double) stb_dec / BCD_IN_CONV_MULTIPLIER;
+                s7d_writeDouble(&disp_stb, stb_dbl, DEC_LEN, FILLING_POLICY);
+            }
+            break;
+
+        // Backlight id
+        case BACKLIGHT_ID:
+            bckl = can_in[BACKLIGHT_POS];
+            if (bckl != IGNORED_BYTE_VALUE){
+                if (bckl < BACKLIGHT_MIN_DC)
+                    bckl = BACKLIGHT_MIN_DC;
+                if (bckl > BACKLIGHT_MAX_DC)
+                    bckl = BACKLIGHT_MAX_DC;
+                COntinue
+            }
+            break;
+        // Unexpected packet
+        default: 
+            return;
+    }
+
 }

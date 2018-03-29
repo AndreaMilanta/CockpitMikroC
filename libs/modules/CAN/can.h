@@ -24,15 +24,21 @@
 #ifndef CAN_H
 #define CAN_H
 
+#include "basic.h"
+#include "current.h"
 
 #define CAN_RETRY_LIMIT 5 //50
 #define CAN_DEFAULT_FLAGS _CAN_TX_STD_FRAME & _CAN_TX_NO_RTR_FRAME
 
-#define onCanInterrupt void CAN_Interrupt() iv IVT_ADDR_C1INTERRUPT
+#ifdef CAN1_DEVICE
+    #define onCan1Interrupt void CAN1_Interrupt() iv IVT_ADDR_C1INTERRUPT
+    #define can1_clearInterrupt() CAN1_INTERRUPT_OCCURRED = FALSE
+#endif // CAN1_DEVICE
 
-#define CAN_INTERRUPT_OCCURRED IFS1BITS.C1IF
-#define CAN_INTERRUPT_ONB1_OCCURRED C1INTFBITS.RXB1IF
-#define CAN_INTERRUPT_ONB0_OCCURRED C1INTFBITS.RXB0IF
+#ifdef CAN2_DEVICE
+    #define onCan2Interrupt void CAN2_Interrupt() iv IVT_ADDR_C2INTERRUPT
+    #define can2_clearInterrupt() CAN2_INTERRUPT_OCCURRED = FALSE
+#endif // CAN2_DEVICE
 
 #define CAN_PRIORITY_HIGH _CAN_TX_PRIORITY_0
 #define CAN_PRIORITY_MEDIUM _CAN_TX_PRIORITY_1
@@ -68,52 +74,27 @@ RESTORE_CPU_IPL(save_sr); } (void) 0;
 //*/
 //>
 
-enum CanPosition{
-    MASK_B1,
-    FILTER_B1_F1,
-    FILTER_B1_F2,
-    MASK_B2,
-    FILTER_B2_F1
-}
 
-/* Actually declared on can.c
-extern unsigned char can_dataOutBuffer[CAN_PACKET_SIZE];
-extern unsigned int can_dataOutLength = 0;
-extern unsigned int can_txPriority = CAN_PRIORITY_MEDIUM;
-extern unsigned int can_err = 0;
-extern unsigmed int can_mef[] = {0, 0, 0, 0, 0}
-//*/
+// Struct that holds masking and filtering info 
+typedef struct {
+    uint16_t b1_mask;
+    uint16_t b1_filter_1;
+    uint16_t b1_filter_2;
+    uint16_t b2_mask;
+    uint16_t b2_filter_1;
+} can_masking;
 
-void Can_init(void);
 
-void Can_read(unsigned long int *id, char dataBuffer[], unsigned int *dataLength, unsigned int *inFlags);
+void can_init(uint8_t device, can_masking* mef);
 
-void Can_writeByte(unsigned long int id, unsigned char dataOut);
+uint8_t can_write(uint8_t device, uint32_t id, uint8_t dataBuffer[], uint16_t priority);
 
-void Can_writeInt(unsigned long int id, int dataOut);
+#ifdef CAN1_DEVICE
+    void can1_read(uint32_t *id, uint8_t dataBuffer[], uint16_t *dataLength, uint16_t *inFlags);
+#endif //CAN1_DEVICE
 
-void Can_addIntToWritePacket(int dataOut);
-
-void Can_addByteToWritePacket(unsigned char dataOut);
-
-unsigned int Can_write(unsigned long int id);
-
-void Can_setWritePriority(unsigned int txPriority);
-
-void Can_resetWritePacket(void);
-
-unsigned int Can_getWriteFlags(void);
-
-unsigned char Can_B0hasBeenReceived(void);
-
-unsigned char Can_B1hasBeenReceived(void);
-
-void Can_clearB0Flag(void);
-
-void Can_clearB1Flag(void);
-
-void Can_clearInterrupt(void);
-
-void Can_initInterrupt(void);
+#ifdef CAN2_DEVICE
+    void can2_read(uint32_t *id, uint8_t dataBuffer[], uint16_t *dataLength, uint16_t *inFlags);
+#endif //CAN2_DEVICE
 
 #endif //CAN_H

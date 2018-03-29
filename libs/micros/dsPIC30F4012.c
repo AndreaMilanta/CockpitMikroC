@@ -2,19 +2,19 @@
  * Author: Andrea Milanta
  * Created: 27/03/2018
  *
- * holds definitions and main setup functions for the dsPIC30F6012A microcontroller
+ * holds definitions and main setup functions for the dsPIC30F4012 microcontroller
  */
  
 #include "dsPIC30F4012.h"
 
-const double INSTRUCTION_PERIOD = 4.0 / OSC_FREQ_MHZ;
+//const double INSTRUCTION_PERIOD = 4.0 / OSC_FREQ_MHZ;
 const unsigned int PRESCALER_VALUES[] = {1, 8, 64, 256};
 
 void setAllPinAsDigital(void) {
     ADPCFG = 0xFFFF;
 }
 
-void setInterruptPriority(unsigned char device, unsigned char priority) {
+void setExternalInterruptPriority(unsigned char device, unsigned char priority) {
     switch (device) {
         case INT0_DEVICE:
             INT0_PRIORITY = priority;
@@ -40,7 +40,7 @@ void setInterruptPriority(unsigned char device, unsigned char priority) {
 }
 
 void setExternalInterrupt(unsigned char device, char edge) {
-    setInterruptPriority(device, MEDIUM_PRIORITY);
+    setExternalInterruptPriority(device, MEDIUM_PRIORITY);
     switch (device) {
         case INT0_DEVICE:
             INT0_TRIGGER_EDGE = edge;
@@ -129,98 +129,6 @@ void clearExternalInterrupt(unsigned char device) {
         default:
             break;
     }
-}
-
-void setTimer(unsigned char device, double timePeriod) {
-    unsigned char prescalerIndex;
-    setInterruptPriority(device, MEDIUM_PRIORITY);
-    //TimePeriod = TimerPeriod * TimerPrescaler * InstructionPeriod
-    prescalerIndex = getTimerPrescaler(timePeriod);
-    switch (device) {
-        case TIMER1_DEVICE:
-            TIMER1_PERIOD = getTimerPeriod(timePeriod, prescalerIndex);
-            TIMER1_ENABLE_INTERRUPT = TRUE;
-            T1CON = 0x8004;
-            //TIMER1_ENABLE = TRUE;
-            //TIMER1_PRESCALER = prescalerIndex;
-            break;
-        case TIMER2_DEVICE:
-            TIMER2_PERIOD = getTimerPeriod(timePeriod, prescalerIndex);
-            TIMER2_ENABLE_INTERRUPT = TRUE;
-            TIMER2_ENABLE = TRUE;
-            TIMER2_PRESCALER = prescalerIndex;
-            break;
-        case TIMER4_DEVICE:
-            TIMER4_PERIOD = getTimerPeriod(timePeriod, prescalerIndex);
-            TIMER4_ENABLE_INTERRUPT = TRUE;
-            TIMER4_ENABLE = TRUE;
-            TIMER4_PRESCALER = prescalerIndex;
-            break;
-    }
-}
-
-void clearTimer(unsigned char device) {
-    switch (device) {
-        case TIMER1_DEVICE:
-            TIMER1_OCCURRED = FALSE;
-            break;
-        case TIMER2_DEVICE:
-            TIMER2_OCCURRED = FALSE;
-            break;
-        case TIMER4_DEVICE:
-            TIMER4_OCCURRED = FALSE;
-            break;
-    }
-}
-
-void turnOnTimer(unsigned char device) {
-    switch (device) {
-        case TIMER1_DEVICE:
-            TIMER1_ENABLE = TRUE;
-            break;
-        case TIMER2_DEVICE:
-            TIMER2_ENABLE = TRUE;
-            break;
-        case TIMER4_DEVICE:
-            TIMER4_ENABLE = TRUE;
-            break;
-    }
-}
-
-void turnOffTimer(unsigned char device) {
-    switch (device) {
-        case TIMER1_DEVICE:
-            TIMER1_ENABLE = FALSE;
-            break;
-        case TIMER2_DEVICE:
-            TIMER2_ENABLE = FALSE;
-            break;
-        case TIMER4_DEVICE:
-            TIMER4_ENABLE = FALSE;
-            break;
-    }
-}
-
-unsigned int getTimerPeriod(double timePeriod, unsigned char prescalerIndex) {
-    return (unsigned int) ((timePeriod * 1000000) / (INSTRUCTION_PERIOD * PRESCALER_VALUES[prescalerIndex]));
-}
-
-unsigned char getTimerPrescaler(double timePeriod) {
-    unsigned char i;
-    double exactTimerPrescaler;
-    exactTimerPrescaler = getExactTimerPrescaler(timePeriod);
-    for (i = 0; i < sizeof(PRESCALER_VALUES) / 2; i += 1) {
-        if ((int) exactTimerPrescaler < PRESCALER_VALUES[i]) {
-            return i;
-        }
-    }
-    i -= 1;
-    //Using largest prescaler available, maximum timer value reached
-    return i;
-}
-
-double getExactTimerPrescaler(double timePeriod) {
-    return (timePeriod * 1000000) / (INSTRUCTION_PERIOD * MAX_TIMER_PERIOD_VALUE);
 }
 
 void setupAnalogSampling(void) {

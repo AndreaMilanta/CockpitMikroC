@@ -9,6 +9,12 @@
 #define CKP_CANIDS_H
 
 /**
+ * ILLUMINATION
+ */
+#define BACKLIGHT_ID 0b00000000000
+#define BACKLIGHT_POS 0     // value is represented as percentage on byte 0
+
+/**
  * RADIOS
  */
 // ids
@@ -18,8 +24,8 @@
 #define NAV2_ID 0b00000000000
 
 // Position of data in package
-#define ACT_DISP 0            // position in package (int)      // to panel
-#define STB_DISP 1            // position in package (int)      // to panel
+#define ACT_DISP 0            // position in package (int, occupied two bytes)      // to panel
+#define STB_DISP 2            // position in package (int, occupies two bytes)      // to panel
 #define STB_ACT_SWAP 0        // position in package (byte)     // to FSX
 #define ACT_INT_DELTA 1       // position in package (byte)     // to FSX
 #define ACT_DEC_DELTA 2       // position in package (byte)     // to FSX

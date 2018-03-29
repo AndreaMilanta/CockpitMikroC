@@ -2,7 +2,7 @@
  * Author: Andrea Milanta
  * Created: 27/03/2018
  *
- * holds definitions and main setup functions for the dsPIC30F4012 microcontroller
+ * holds definitions and main setup functions for the dsPIC30F6012A microcontroller
  */
 
 #ifndef DSPIC30F6012A_H

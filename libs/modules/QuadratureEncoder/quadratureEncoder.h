@@ -7,6 +7,14 @@
  * Switch is to be connected with PULLUP
  */
 
+/** USAGE
+ * 
+ * 1. Declare qe_struct
+ * 2. Load struct
+ * 3. Each QE_UPDATE_RATE (ms) call qe_update. Usually put in timer interrupt handler
+ * 4. Check result of qe_update. Pushing info is given by qe->pushed
+ */
+
 #ifndef QUADRATUREENCODER_H
 #define QUADRATUREENCODER_H
 

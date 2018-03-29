@@ -9,8 +9,7 @@
 #define DSPIC30F4012_H
 
 #include "basic.h"
-
- #define OSC_FREQ_MHZ 80
+#include "current.h"
 
  // General defines
  #define MAX_ANALOG_CLOCK_CONVERSION_VALUE   32
@@ -18,13 +17,16 @@
  #define MINIMUM_CONVERSION_TAD_COUNT    13 //Minimum conversion period
  #define MAXIMUM_CONVERSION_TAD_COUNT    43 //Maximum conversion period
 
- // Devices list
- #define TIMER1_DEVICE 1
- #define TIMER2_DEVICE 2
- #define TIMER4_DEVICE 3
- #define INT0_DEVICE 4
- #define INT1_DEVICE 5
- #define INT2_DEVICE 6
+ // list of Devices available
+ #define TIMER1_DEVICE 0
+ #define TIMER2_DEVICE 1
+ #define TIMER4_DEVICE 2
+
+ #define INT0_DEVICE 10
+ #define INT1_DEVICE 11
+ #define INT2_DEVICE 12
+
+ #define CAN1_DEVICE 20
 
  // Analog Pin Inputs
  #define AN0  0
@@ -44,18 +46,20 @@
  #define AN14  14
  #define AN15  16
 
- // External pin interrupt    
+ // External pin interrupt (Implemented: 0 ~ 1 ~ 2)   
  #define INT0_TRIGGER_EDGE   INTCON2.INT0EP
- #define INT1_TRIGGER_EDGE   INTCON2.INT1EP
- #define INT2_TRIGGER_EDGE   INTCON2.INT2EP
  #define INT0_PRIORITY   IPC0bits.INT0IP
- #define INT1_PRIORITY   IPC4bits.INT1IP
- #define INT2_PRIORITY   IPC5bits.INT2IP
  #define INT0_OCCURRED   IFS0.INT0IF
- #define INT1_OCCURRED    IFS1.INT1IF
- #define INT2_OCCURRED   IFS1.INT2IF
  #define INT0_ENABLE IEC0.INT0IE
+
+ #define INT1_TRIGGER_EDGE   INTCON2.INT1EP
+ #define INT1_PRIORITY   IPC4bits.INT1IP
+ #define INT1_OCCURRED    IFS1.INT1IF
  #define INT1_ENABLE IEC1.INT1IE
+
+ #define INT2_TRIGGER_EDGE   INTCON2.INT2EP
+ #define INT2_PRIORITY   IPC5bits.INT2IP
+ #define INT2_OCCURRED   IFS1.INT2IF
  #define INT2_ENABLE IEC1.INT2IE
 
  // Timer (Implemented: 1 ~ 2 ~ 4)
@@ -79,6 +83,14 @@
  #define TIMER4_ENABLE_INTERRUPT IEC1bits.T4IE
  #define TIMER4_ENABLE   T4CONbits.TON
  #define TIMER4_OCCURRED IFS1bits.T4IF
+
+ // CAN
+ #define CAN1_INTERRUPT_ENABLE IEC1bits.C1IE
+ #define CAN1_INTERRUPT_REC_B0_ENABLE C1INTEbits.RX0IE
+ #define CAN1_INTERRUPT_REC_B1_ENABLE C1INTEbits.RX1IE
+ #define CAN1_INTERRUPT_OCCURRED IFS1BITS.C1IF
+ #define CAN1_INTERRUPT_ONB1_OCCURRED C1INTFBITS.RXB1IF
+ #define CAN1_INTERRUPT_ONB0_OCCURRED C1INTFBITS.RXB0IF
 
  // Analog
  #define ANALOG_INTERRUPT_ENABLE IEC0bits.ADIE
@@ -133,45 +145,26 @@
  #define ACNI_VREF   0
 
  // Interrupt handlers
- #define onTimer1Interrupt void timer1_interrupt() iv IVT_ADDR_T1INTERRUPT ics ICS_AUTO
- #define onTimer2Interrupt void timer2_interrupt() iv IVT_ADDR_T2INTERRUPT ics ICS_AUTO
- #define onTimer4Interrupt void timer4_interrupt() iv IVT_ADDR_T4INTERRUPT ics ICS_AUTO
  #define onExternal0Interrupt void external0() iv IVT_ADDR_INT0INTERRUPT ics ICS_AUTO
  #define onExternal1Interrupt void external1() iv IVT_ADDR_INT1INTERRUPT ics ICS_AUTO
  #define onExternal2Interrupt void external2() iv IVT_ADDR_INT2INTERRUPT ics ICS_AUTO
  #define onADCInterrupt void analog_interrupt() iv IVT_ADDR_ADCINTERRUPT ics ICS_AUTO
 
- // Faster timer operations
- #define clearTimer1() TIMER1_OCCURRED = FALSE
- #define clearTimer2() TIMER2_OCCURRED = FALSE
- #define clearTimer4() TIMER4_OCCURRED = FALSE
- #define turnOnTimer4() TIMER4_ENABLE = TRUE
- #define turnOffTimer4() TIMER4_ENABLE = FALSE
-
  /* Actually declared in dsPIC30F4012.c file
- const double INSTRUCTION_PERIOD = 4.0 / OSC_FREQ_MHZ;
- const unsigned int PRESCALER_VALUES[] = {1, 8, 64, 256};
+ extern const double INSTRUCTION_PERIOD;
+ extern const unsigned int PRESCALER_VALUES[];
  //*/
 
  // Initialization
  void setAllPinAsDigital(void);
  
  // External Interrupts
- void setInterruptPriority(unsigned char device, unsigned char priority);
+ void setExternalInterruptPriority(unsigned char device, unsigned char priority);
  void setExternalInterrupt(unsigned char device, char edge);
  void switchExternalInterruptEdge(unsigned char);
  char getExternalInterruptEdge(unsigned char);
  void clearExternalInterrupt(unsigned char);
  
- // Timers
- void setTimer(unsigned char device, double timePeriod);
- void clearTimer(unsigned char device);
- void turnOnTimer(unsigned char device);
- void turnOffTimer(unsigned char device);
- unsigned int getTimerPeriod(double timePeriod, unsigned char prescalerIndex);
- unsigned char getTimerPrescaler(double timePeriod);
- double getExactTimerPrescaler(double timePeriod);
-
  // Analog
  void setupAnalogSampling(void);
  void turnOnAnalogModule();
