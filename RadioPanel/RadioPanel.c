@@ -40,13 +40,16 @@ qe_struct qe_act, qe_stb;
 
 // test button
 #define TEST_INPUT_MODE PULLUP
-#define PUSH_TIME 0
 pb_struct pb_test;
+
+// test button
+#define SWAP_INPUT_MODE PULLUP
+pb_struct pb_swap;
 
 // pins
 pin dataPin, clockPin, act_ltc, stb_ltc;
 pin qe1_pinA, qe1_pinB, qe1_pinSW, qe2_pinA, qe2_pinB, qe2_pinSW;
-pin test_pin;
+pin test_pin, swap_pin;
 
 // counters
 uint8_t s7d_counter;
@@ -75,10 +78,10 @@ void init(void)
 
     // define pins with role (input/output)
     // seven segment display
-    dataPin.port = &PORTE;    dataPin.pos = 4;      TRISE &= ~(1 << dataPin.pos);   //RE4
-    clockPin.port = &PORTE;   clockPin.pos = 1;     TRISE &= ~(1 << clockPin.pos);  //RE1
-    act_ltc.port = &PORTE;    act_ltc.pos = 2;      TRISE &= ~(1 << act_ltc.pos);   //RE2
-    stb_ltc.port = &PORTE;    stb_ltc.pos = 3;      TRISE &= ~(1 << stb_ltc.pos);   //RE3
+    dataPin.port = &PORTE;    dataPin.pos = 2;      TRISE &= ~(1 << dataPin.pos);   //RE2
+    clockPin.port = &PORTE;   clockPin.pos = 3;     TRISE &= ~(1 << clockPin.pos);  //RE3
+    act_ltc.port = &PORTE;    act_ltc.pos = 4;      TRISE &= ~(1 << act_ltc.pos);   //RE4
+    stb_ltc.port = &PORTE;    stb_ltc.pos = 5;      TRISE &= ~(1 << stb_ltc.pos);   //RE5
     // Encoders
     qe1_pinA.port = &PORTB;   qe1_pinA.pos = 0;     TRISB |= (1 << qe1_pinA.pos);   //RB0
     qe1_pinB.port = &PORTB;   qe1_pinB.pos = 1;     TRISB |= (1 << qe1_pinB.pos);   //RB1
@@ -88,6 +91,7 @@ void init(void)
     qe2_pinSW.port = &PORTB;  qe2_pinSW.pos = 5;    TRISB |= (1 << qe2_pinSW.pos);  //RB5
     // Test button
     test_pin.port = &PORTD;   test_pin.pos = 1;     TRISD |= (1 << test_pin.pos);   //RD1
+    swap_pin.port = &PORTD;   swap_pin.pos = 0;     TRISD |= (1 << swap_pin.pos);   //RD0
 
 
     // load display structs
@@ -101,7 +105,8 @@ void init(void)
     qe_counter = QE_UPDATE_RATE;
 
     // push button struct
-    pb_loadStruct(&pb_test, test_pin, PUSH_TIME, TEST_INPUT_MODE);
+    pb_loadStruct(&pb_test, test_pin, IMMEDIATE, TEST_INPUT_MODE);
+    pb_loadStruct(&pb_swap, swap_pin, IMMEDIATE, SWAP_INPUT_MODE);
     pb_counter = PB_UPDATE_RATE;
 
     // setup CAN
@@ -168,8 +173,9 @@ onTimer1Interrupt
         qe_counter = QE_UPDATE_RATE;
     }
 
-    // test button handling
+    // buttons handling
     if (pb_counter) {
+        // Test button
         switch (pb_update(&pb_test)) {
             case PB_TRIGGER_PUSH:
                 disp_act.testing = TRUE;
@@ -180,6 +186,13 @@ onTimer1Interrupt
                 disp_stb.testing = FALSE;
                 break;
         }
+
+        // Swap button
+        if (pb_update(&pb_swap) == PB_TRIGGER_PUSH) {
+            can_out[STB_ACT_SWAP] = TRIGGERED;
+            can_tbs = TRUE;
+        }
+
         pb_counter = PB_UPDATE_RATE;
     }
 

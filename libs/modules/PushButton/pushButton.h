@@ -12,6 +12,7 @@
 
 #define PB_UPDATE_RATE 2
 #define PB_MIN_DEBOUNCING_ms 30
+#define IMMEDIATE 0             // button is triggered as soon as debouncing is finished
 
 #define PB_UNPUSHED 0
 #define PB_PUSHED 1
